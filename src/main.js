@@ -3,6 +3,7 @@ import './style.css'
 import App from './App.vue'
 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 
 import axios from 'axios';
@@ -11,6 +12,7 @@ import router from './router'
 
 
 axios.defaults.baseURL = 'http://localhost:8080';
+axios.defaults.withCredentials = true;
 
 const app = createApp(App)
 
