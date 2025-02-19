@@ -3,15 +3,23 @@ import { reactive } from "vue";
 import router from "../router/index.js";
 import axios from "axios";
 import { Form, Field, ErrorMessage, defineRule } from 'vee-validate';
-import { required, email, min, max, confirmed } from '@vee-validate/rules';
+// import { required, email, min, max, confirmed } from '@vee-validate/rules';
 import { SwalHandle } from "../stores/sweetAlertStore";
 
 // 註冊驗證規則
-defineRule('required', required);
-defineRule('email', email);
-defineRule('min', min);
-defineRule('max', max);
-defineRule('confirmed', confirmed);
+defineRule('required', value => value ? true : '此欄位為必填');
+defineRule('email', value => /\S+@\S+\.\S+/.test(value) ? true : '請輸入有效的 Email');
+defineRule('min', (value, [length]) => value.length >= length ? true : `最少需輸入 ${length} 個字`);
+defineRule('max', (value, [length]) => value.length <= length ? true : `最多可輸入 ${length} 個字`);
+defineRule('confirmed', (value, [targetValue]) => {
+  return value === targetValue ? true : '密碼不一致';
+});
+defineRule('gender', value => {
+  return value ? true : '請選擇性別';
+});
+
+
+
 
 // 自定義身分證字號驗證規則
 defineRule('taiwanId', value => {
@@ -36,7 +44,7 @@ const user = reactive({
   password: "",
   confirmPassword: "",
   idNumber: "",
-  gender: "male",
+  gender: "",
   name: "",
   birthday: "",
   mobileNumber: "",
@@ -50,6 +58,7 @@ const validationSchema = {
   password: { required: true, min: 8 },
   confirmPassword: { required: true, confirmed: '@password' },
   idNumber: { required: true, taiwanId: true },
+  gender: { required: true, gender: true },
   name: { required: true, min: 2 },
   birthday: { required: true },
   mobileNumber: { required: true, mobileNumber: true },
@@ -80,7 +89,7 @@ const pushToLoginPage = () => {
 </script>
 
 <template>
-  <div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="container d-flex justify-content-center align-items-center">
     <div class="register-container">
       <h2>註冊</h2>
       <Form :validation-schema="validationSchema" @submit="register" v-slot="{ errors }">
@@ -148,10 +157,13 @@ const pushToLoginPage = () => {
             id="gender"
             v-model="user.gender"
             class="form-control"
+            :class="{ 'is-invalid': errors.gender }"
           >
+            <option value="">請選擇</option>
             <option value="male">男</option>
             <option value="female">女</option>
           </Field>
+          <ErrorMessage name="gender" class="invalid-feedback" />
         </div>
 
         <div class="form-group mb-3">

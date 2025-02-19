@@ -7,20 +7,29 @@ import { SwalHandle } from '../stores/sweetAlertStore';
 import { Form, Field, ErrorMessage, defineRule } from 'vee-validate';
 import { required, email, min, max } from '@vee-validate/rules';
 
-// 註冊驗證規則
+// 使用預設驗證規則
 defineRule('required', required);
 defineRule('email', email);
 defineRule('min', min);
 defineRule('max', max);
 
-// 自定義手機號碼驗證規則
+// 自訂驗證規則
 defineRule('mobileNumber', value => {
-  if (!value) return true; // 允許空值
-  const phoneRegex = /^09\d{8}$/;
-  if (!phoneRegex.test(value)) {
-    return '請輸入有效的手機號碼';
-  }
-  return true;
+    if (!value) return true;
+    const phoneRegex = /^09\d{8}$/;
+    if (!phoneRegex.test(value)) {
+        return '請輸入有效的手機號碼';
+    }
+    return true;
+});
+
+defineRule('landlineNumber', value => {
+    if (!value) return true;
+    const landlineRegex = /^0\d{8,9}$/
+    if (!landlineRegex.test(value)) {
+        return '請輸入有效的市話號碼，無需加上-';
+    }
+    return true;
 });
 
 const modelStatus = ref(false)
@@ -39,6 +48,7 @@ const editUserInfo = ref({
 
 const validationSchema = {
     mobileNumber: { mobileNumber: true },
+    landlineNumber: { landlineNumber: true },
     permanentAddress: { required: true },
     mailingAddress: { required: true }
 };
@@ -52,6 +62,8 @@ const getUserInfo = () => {
 }
 
 const updateUserInfo = (values) => {
+    console.log(values);
+
     axios.post('/api/userInfo/update', values).then(() => {
         SwalHandle.showSuccessMsg("修改成功");
         modelStatus.value = false
@@ -104,7 +116,7 @@ onMounted(() => {
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <!-- <th>ID</th> -->
                         <th>身分證號</th>
                         <th>性別</th>
                         <th>姓名</th>
@@ -118,7 +130,7 @@ onMounted(() => {
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{ userInfo.id }}</td>
+                        <!-- <td>{{ userInfo.id }}</td> -->
                         <td>{{ userInfo.idNumber }}</td>
                         <td>{{ userInfo.gender === 'male' ? '男' : '女' }}</td>
                         <td>{{ userInfo.name }}</td>
@@ -133,15 +145,13 @@ onMounted(() => {
             </table>
 
             <div v-if="modelStatus">
+
+                <h2>其他部份需更改請聯繫客服人員</h2>
                 <Form :validation-schema="validationSchema" @submit="updateUserInfo" v-slot="{ errors }">
+
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>身分證號</th>
-                                <th>性別</th>
-                                <th>姓名</th>
-                                <th>生日</th>
                                 <th>手機號碼</th>
                                 <th>市話號碼</th>
                                 <th>戶籍地址</th>
@@ -151,50 +161,30 @@ onMounted(() => {
                         </thead>
                         <tbody>
                             <tr>
-                                <td><input type="text" class="form-control" v-model="editUserInfo.id" readonly></td>
-                                <td><input type="text" class="form-control" v-model="editUserInfo.idNumber" disabled></td>
                                 <td>
-                                    <select class="form-select" v-model="editUserInfo.gender" disabled>
-                                        <option value="Male">男</option>
-                                        <option value="Female">女</option>
-                                    </select>
-                                </td>
-                                <td><input type="text" class="form-control" v-model="editUserInfo.name" disabled></td>
-                                <td><input type="date" class="form-control" v-model="editUserInfo.birthday" disabled></td>
-                                <td>
-                                    <Field
-                                        name="mobileNumber"
-                                        type="tel"
-                                        v-model="editUserInfo.mobileNumber"
-                                        class="form-control"
-                                        :class="{ 'is-invalid': errors.mobileNumber }"
-                                    />
+                                    <Field name="mobileNumber" type="tel" v-model="editUserInfo.mobileNumber"
+                                        class="form-control" :class="{ 'is-invalid': errors.mobileNumber }" />
                                     <ErrorMessage name="mobileNumber" class="invalid-feedback" />
                                 </td>
-                                <td><input type="tel" class="form-control" v-model="editUserInfo.landlineNumber"></td>
                                 <td>
-                                    <Field
-                                        name="permanentAddress"
-                                        type="text"
-                                        v-model="editUserInfo.permanentAddress"
-                                        class="form-control"
-                                        :class="{ 'is-invalid': errors.permanentAddress }"
-                                    />
+                                    <Field name="landlineNumber" type="tel" v-model="editUserInfo.landlineNumber"
+                                        class="form-control" :class="{ 'is-invalid': errors.landlineNumber }" />
+                                    <ErrorMessage name="landlineNumber" class="invalid-feedback" />
+
+                                </td>
+                                <td>
+                                    <Field name="permanentAddress" type="text" v-model="editUserInfo.permanentAddress"
+                                        class="form-control" :class="{ 'is-invalid': errors.permanentAddress }" />
                                     <ErrorMessage name="permanentAddress" class="invalid-feedback" />
                                 </td>
                                 <td>
-                                    <Field
-                                        name="mailingAddress"
-                                        type="text"
-                                        v-model="editUserInfo.mailingAddress"
-                                        class="form-control"
-                                        :class="{ 'is-invalid': errors.mailingAddress }"
-                                    />
+                                    <Field name="mailingAddress" type="text" v-model="editUserInfo.mailingAddress"
+                                        class="form-control" :class="{ 'is-invalid': errors.mailingAddress }" />
                                     <ErrorMessage name="mailingAddress" class="invalid-feedback" />
                                 </td>
                                 <td>
-                                    <button type="submit" class="btn btn-primary">儲存變更</button>
-                                    <button type="button" class="btn btn-secondary" @click="closeModel">關閉</button>
+                                    <button type="submit" class="btn btn-primary mb-2">儲存變更</button>
+                                    <button type="button" class="btn btn-secondary" @click="closeModel">取消編輯</button>
                                 </td>
                             </tr>
                         </tbody>
@@ -203,7 +193,7 @@ onMounted(() => {
             </div>
         </div>
 
-        <button class="btn btn-secondary w-100 mt-5" @click="logout">登出</button>
+        <button class="btn btn-secondary w-100 mt-5" @click="logout">登出帳號</button>
         <button class="btn btn-secondary w-100 mt-5" @click="confirmDeleteAccount">刪除帳號</button>
     </div>
 </template>
