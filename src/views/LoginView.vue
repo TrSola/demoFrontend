@@ -1,7 +1,7 @@
 <script setup>
 
 import axios from 'axios';
-import { watch, reactive } from 'vue';
+import { reactive } from 'vue';
 import router from "../router/index.js";
 import { SwalHandle } from '../stores/sweetAlertStore.js';
 
